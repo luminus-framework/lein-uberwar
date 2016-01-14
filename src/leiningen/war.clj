@@ -232,7 +232,7 @@
                         (unmerge-profiles [:default])
                         (merge-profiles profiles-to-merge)
                         add-servlet-dep)
-           result  (compile/compile project)]
+           result (compile/compile (merge-profiles project [:provided]))]
        (when-not (and (number? result) (pos? result))
          (let [war-path (war-file-path project war-name)]
            (compile-servlet project)
