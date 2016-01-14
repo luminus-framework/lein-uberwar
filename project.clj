@@ -1,4 +1,4 @@
-(defproject lein-uberwar "0.1.0"
+(defproject lein-uberwar "0.2.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "https://github.com/yogthos/lein-uberwar"
   :license {:name "Eclipse Public License"
