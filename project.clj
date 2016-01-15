@@ -1,5 +1,5 @@
-(defproject lein-uberwar "0.2.0-SNAPSHOT"
-  :description "FIXME: write description"
+(defproject lein-uberwar "0.2.0"
+  :description "a Leiningen plugin for packaging WAR archives"
   :url "https://github.com/yogthos/lein-uberwar"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
