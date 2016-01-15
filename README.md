@@ -7,7 +7,7 @@ A Leiningen plugin for packaging WAR archives, split out from [lein-ring](https:
 To use Lein-Ring, add it as a plugin to your `project.clj` file or
 your global profile:
 
-    :plugins [[lein-uberwar "0.1.0"]]
+    :plugins [[lein-uberwar "0.2.0"]]
 
 Then add a new `:uberwar` key to your `project.clj` file that contains a
 map of configuration options. At minimum there must be a `:handler`
