@@ -96,10 +96,30 @@
           :xmlns:xsi "http://www.w3.org/2001/XMLSchema-instance"
           :xsi:schemaLocation (str "http://java.sun.com/xml/ns/javaee "
                                    "http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd")
-          :version "3.0"}})
+          :version "3.0"}
+   "3.1" {:xmlns     "http://xmlns.jcp.org/xml/ns/javaee"
+          :xmlns:xsi "http://www.w3.org/2001/XMLSchema-instance"
+          :xsi:schemaLocation (str "http://xmlns.jcp.org/xml/ns/javaee "
+                                   "http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd")
+          :version "3.1"}
+   "4.0" {:xmlns     "http://xmlns.jcp.org/xml/ns/javaee"
+          :xmlns:xsi "http://www.w3.org/2001/XMLSchema-instance"
+          :xsi:schemaLocation (str "http://xmlns.jcp.org/xml/ns/javaee "
+                                   "http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd")
+          :version "4.0"}})
 
 (def default-servlet-version "2.5")
 
+(defn- servlet-stanza [project]
+  (let [async? (get-in project [:uberwar :async?])
+        s [:servlet
+           [:servlet-name (servlet-name project)]
+           [:servlet-class (servlet-class project)]]]
+    (if (not (nil? async?))
+      (conj s [:async-supported async?])
+      s
+      )))
+  
 (defn make-web-xml [project]
   (let [ring-options (:uberwar project)]
     (if (contains? ring-options :web-xml)
@@ -112,24 +132,24 @@
                 {})
            [:listener
             [:listener-class (listener-class project)]]
-           [:servlet
-            [:servlet-name  (servlet-name project)]
-            [:servlet-class (servlet-class project)]]
+           (servlet-stanza project)
            [:servlet-mapping
             [:servlet-name (servlet-name project)]
             [:url-pattern (url-pattern project)]]])))))
 
 (defn generate-handler [project handler-sym]
   (if (get-in project [:uberwar :servlet-path-info?] true)
-    `(let [handler# ~(generate-resolve handler-sym)]
-       (fn [request#]
-         (let [context# (.getContextPath
-                          ^javax.servlet.http.HttpServletRequest
-                          (:servlet-request request#))]
-           (handler#
-            (assoc request#
-              :context context#
-              :path-info (-> (:uri request#) (subs (.length context#)) not-empty (or "/")))))))
+    `(let [handler# ~(generate-resolve handler-sym)
+           update-request# (fn [request#]
+                             (let [context# (.getContextPath 
+                                             ^javax.servlet.http.HttpServletRequest
+                                             (:servlet-request request#))]
+                               (assoc request#
+                                      :context context#
+                                      :path-info (-> (:uri request#) (subs (.length context#)) not-empty (or "/")))))]
+       (fn
+         ([request#] (handler# (update-request# request#)))
+         ([request# respond# raise#] (handler# (update-request# request#) respond# raise#))))
     (generate-resolve handler-sym)))
 
 (defn compile-servlet [project]
@@ -147,7 +167,8 @@
         destroy-sym (get-in project [:uberwar :destroy])
         handler-sym (get-in project [:uberwar :handler])
         servlet-ns  (servlet-ns project)
-        project-ns  (symbol (listener-ns project))]
+        project-ns  (symbol (listener-ns project))
+        async?  (get-in project [:uberwar :async?])]
     (assert-vars-exist project init-sym destroy-sym handler-sym)
     (compile-form project project-ns
       `(do (ns ~project-ns
@@ -160,7 +181,7 @@
                    (let [handler# ~(generate-handler project handler-sym)
                          make-service-method# ~(generate-resolve
                                                  'ring.util.servlet/make-service-method)
-                         method# (make-service-method# handler#)]
+                         method# (make-service-method# handler# {:async? ~async?})]
                      (alter-var-root
                        ~(generate-resolve (symbol servlet-ns "service-method"))
                        (constantly method#))))
