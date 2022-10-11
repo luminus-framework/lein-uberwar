@@ -1,4 +1,4 @@
-(defproject lein-uberwar "0.2.3-SNAPSHOT"
+(defproject lein-uberwar "0.2.3"
   :description "a Leiningen plugin for packaging WAR archives"
   :url "https://github.com/yogthos/lein-uberwar"
   :license {:name "Eclipse Public License"
